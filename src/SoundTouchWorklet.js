@@ -19,6 +19,11 @@
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */
+
+// since the worker does not run in main thread, we need the regeneratorRuntime
+// bundled into the worker itself, as Babel with add all the helpers for the
+// worker code
+import 'regenerator-runtime/runtime';
 import { SoundTouch, SimpleFilter } from 'soundtouchjs';
 import ProcessAudioBufferSource from './ProcessAudioBufferSource';
 
@@ -75,7 +80,7 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
        * The SimpleFilter takes the source and SoundTouch to perform the
        * filtering operations on the audio data (stretch, transpose, etc)
        */
-      this._filter = new SimpleFilter(this._pipe, this.bufferSource);
+      this._filter = new SimpleFilter(this.bufferSource, this._pipe);
       // Notify the AudioWorkletNode (SoundTouchNode) that the processor is now ready
       this.port.postMessage({
         message: 'PROCESSOR_READY',
