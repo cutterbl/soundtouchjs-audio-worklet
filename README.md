@@ -1,12 +1,18 @@
 # SoundTouchJS Audio Worklet
 
-# WORK IN PROGRESS, NOT YET LIVE
-
 The SoundTouchNode is an extension of the Web Audio API [AudioWorkletNode](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletNode).
 It works in conjunction with the SoundTouchWorklet, the [AudioWorkletProcessor](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor) that
 processes the audio from the buffer. You must have the worklet registered
 in your code prior to utilizing the node. The node is represented as a
 true [AudioNode](https://developer.mozilla.org/en-US/docs/Web/API/AudioNode).
+
+## Browsers and Usage Considerations
+
+[AudioWorklet](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorklet)s are currently only available in Chrome, MS Edge, and Electron (with hacks). We use RollupJS and Babel to compile all of our dependencies.
+
+The SoundTouchNode is compiled using the [@babel/plugin-external-helpers](https://brunoscopelliti.com/a-simple-babel-optimization-i-recently-learned/) plugin, so you'll have to manually include the 'helpers'. If you're bundling SoundTouchNode into your application, with Babel, this may happen automagically (I haven't tested that).
+
+The SoundTouchWorklet runs in it's own context, off the main thread. As such, the Babel runtime is bundled with the other worklet dependencies. All of the necessary [SoundTouch](https://github.com/cutterbl/SoundTouchJS) bits are precompiled into the worklet, and the SoundTouchNode controls their properties. Adding worklets/webworkers to your application can be tricky. Read the documentation below for more information.
 
 ## Setting Up the AudioWorkletProcessor (SoundTouchWorklet)
 
