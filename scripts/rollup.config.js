@@ -13,7 +13,9 @@ export default [
         file: pkg.module,
         format: 'es',
         banner: `/*
- * SoundTouch JS v${pkg.version} audio processing library
+ * SoundTouch Audio Worklet v${pkg.version} AudioWorklet using the
+ * SoundTouch audio processing library
+ * 
  * Copyright (c) Olli Parviainen
  * Copyright (c) Ryan Berdeen
  * Copyright (c) Jakub Fiala
