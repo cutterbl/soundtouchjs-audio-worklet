@@ -4,7 +4,7 @@
  */
 
 // This is pulling SoundTouchJS from the local file system. See the README for proper usage.
-import SoundTouchNode from './js/soundtouch-audio-worklet-node.js';
+import SoundTouchNode from './js/soundtouch-audio-node.js';
 
 const loadBtn = document.getElementById('load');
 const playBtn = document.getElementById('play');
