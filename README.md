@@ -140,4 +140,4 @@ Due to the Stretch and Rate Transposition features of SoundTouch, as well as the
 
 Thank You to [Janick Delot](https://github.com/watch-janick) for sponsoring this feature for SoundTouchJS
 
-Thanks to [Cristoph Guttandin](https://github.com/chrisguttandin), of [standardized-audio-context](https://github.com/chrisguttandin/standardized-audio-context) fame, for the idea of providing the factory method to enable polyfill/ponyfill usage.
+Thanks to [Christoph Guttandin](https://github.com/chrisguttandin), of [standardized-audio-context](https://github.com/chrisguttandin/standardized-audio-context) fame, for the idea of providing the factory method to enable polyfill/ponyfill usage.
