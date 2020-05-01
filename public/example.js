@@ -11,8 +11,8 @@ import createSoundTouchNode from './js/soundtouch-audio-node.js';
  * To see this working with the standaridized-audio-context ponyfill,
  * uncomment these two lines
  */
-//import sac from 'https://dev.jspm.io/npm:standardized-audio-context';
-//const { AudioContext, AudioWorkletNode } = sac;
+import sac from 'https://dev.jspm.io/npm:standardized-audio-context';
+const { AudioContext, AudioWorkletNode } = sac;
 
 const loadBtn = document.getElementById('load');
 const playBtn = document.getElementById('play');
@@ -80,11 +80,10 @@ const loadSource = async (url) => {
     await setupContext();
     buffer = await fetch(url).then((resp) => resp.arrayBuffer());
     setupSoundtouch();
+    loadBtn.setAttribute('disabled', 'disabled');
   } catch (err) {
     console.error('[loadSource] ', err);
   }
-
-  loadBtn.setAttribute('disabled', 'disabled');
 };
 
 const setupContext = function () {

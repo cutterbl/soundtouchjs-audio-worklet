@@ -461,9 +461,11 @@ const createSoundTouchNode = (
         // console.log('processor constructor: ', detail);
         // The AudioWorkletProcessor object is instantiated, so we can now decode the raw audio.
         // The 'handleAudioData()' method will send a message back to the AudioWorkletProcessor
-        this.context
-          .decodeAudioData(this._arrayBuffer)
-          .then((audioData) => this.handleAudioData(audioData));
+        this.context.decodeAudioData(
+          this._arrayBuffer,
+          (audioData) => this.handleAudioData(audioData),
+          (err) => console.log('[decodeAudioData ERROR] ', err)
+        );
         return;
       }
 
