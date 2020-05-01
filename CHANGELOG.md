@@ -1,4 +1,11 @@
 Changelog
+### 0.1.4 (2020-05-01)
+
+
+### Bug Fixes
+
+* update decodeAudioData as not promise based ([a4e5f2c](https://github.com/cutterbl/soundtouchjs-audio-worklet/commit/a4e5f2c16fd476cef7786dbabb8128563d2f64c0))
+
 ### 0.1.3 (2020-05-01)
 
 ### 0.1.2 (2020-05-01)
