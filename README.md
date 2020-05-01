@@ -49,7 +49,7 @@ file for processing, you can now setup your SoundTouchNode.
 
 ```js
 //top of the file
-import { SoundTouchNode } from 'soundtouchjs';
+import { SoundTouchNode } from '@soundtouchjs/audio-context';
 //... and later
 
 // called from our `loadSource()` method, after we've retrieved the
