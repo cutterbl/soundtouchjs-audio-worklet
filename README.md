@@ -135,3 +135,9 @@ You also have several other read-only properties available
 ## Memory Considerations
 
 Due to the Stretch and Rate Transposition features of SoundTouch, as well as the nature of AudioWorklets, it is currently necessary to maintain copies of the AudioBuffer in both the browser's main process thread as well as in the [AudioWorkletGlobalScope](https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletGlobalScope) (where the processor processes). This may change in the future, once the [SharedArrayBuffer](https://developer.mozilla.org/en-US/docs/Web/JavaScript/Reference/Global_Objects/SharedArrayBuffer) gains complete adoption in other browsers, but for now it's necessary, and you should be aware of the overhead it creates.
+
+## Credits
+
+Thank You to [Janick Delot](https://github.com/watch-janick) for sponsoring this feature for SoundTouchJS
+
+Thanks to [Cristoph Guttandin](https://github.com/chrisguttandin), of [standardized-audio-context](https://github.com/chrisguttandin/standardized-audio-context) fame, for the idea of providing the factory method to enable polyfill/ponyfill usage.
