@@ -13,7 +13,7 @@
     "url": "https://github.com/cutterbl/soundtouchjs-audio-worklet/issues"
   },
   "scripts": {
-    "build": "rollup -c scripts/rollup.config.js && rollup -c scripts/rollup.worklet.config.js",
+    "build": "rollup -c scripts/rollup.config.js",
     "release": "standard-version",
     "start": "node scripts/server.js"
   },
@@ -56,6 +56,7 @@
     "rollup-plugin-cleanup": "3.1.1",
     "rollup-plugin-clear": "2.0.7",
     "rollup-plugin-eslint": "7.0.0",
+    "rollup-plugin-terser": "5.3.0",
     "serve-static": "1.14.1",
     "soundtouchjs": "0.1.20",
     "standard-version": "7.1.0"
