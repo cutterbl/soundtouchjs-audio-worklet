@@ -4,7 +4,15 @@
  */
 
 // This is pulling SoundTouchJS from the local file system. See the README for proper usage.
-import SoundTouchNode from './js/soundtouch-audio-node.js';
+import createSoundTouchNode from './js/soundtouch-audio-node.js';
+
+/**
+ * https://github.com/chrisguttandin/standardized-audio-context
+ * To see this working with the standaridized-audio-context ponyfill,
+ * uncomment these two lines
+ */
+//import sac from 'https://dev.jspm.io/npm:standardized-audio-context';
+//const { AudioContext, AudioWorkletNode } = sac;
 
 const loadBtn = document.getElementById('load');
 const playBtn = document.getElementById('play');
@@ -92,7 +100,7 @@ const setupSoundtouch = function () {
   if (soundtouch) {
     soundtouch.off();
   }
-  soundtouch = new SoundTouchNode(audioCtx, buffer);
+  soundtouch = createSoundTouchNode(audioCtx, AudioWorkletNode, buffer);
   soundtouch.on('initialized', onInitialized);
 };
 

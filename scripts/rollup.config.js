@@ -7,7 +7,7 @@ import pkg from '../package.json';
 
 export default [
   {
-    input: path.join(__dirname, '../src/SoundTouchNode.js'),
+    input: path.join(__dirname, '../src/createSoundTouchNode.js'),
     output: [
       {
         file: pkg.module,
@@ -35,7 +35,7 @@ export default [
  * License along with this library; if not, write to the Free Software
  * Foundation, Inc., 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA
  */\n`,
-        sourcemap: true,
+        sourcemap: false,
         exports: 'named',
       },
     ],
@@ -46,7 +46,7 @@ export default [
       }),
       eslint(),
       babel({
-        babelHelpers: 'external',
+        babelHelpers: 'bundled',
         configFile: path.resolve(__dirname, '../configs/babel.config.json'),
       }),
       cleanup(),

@@ -31,12 +31,7 @@ const setupContext = function () {
 };
 ```
 
-The [AudioContext](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext) [audioWorklet.addModule()](https://developer.mozilla.org/en-US/docs/Web/API/Worklet/addModule) method returns a Promise. The path
-passed to this method is the path to the SoundTouchWorklet, available
-from the build `dist/soundtouch-worklet.js`. Pathing to this file is
-important, and your server must include a 'Content-Type' header of
-`text/javascript` or `application/javascript` for the file to
-run properly.
+The [AudioContext](https://developer.mozilla.org/en-US/docs/Web/API/AudioContext) [audioWorklet.addModule()](https://developer.mozilla.org/en-US/docs/Web/API/Worklet/addModule) method returns a Promise. The path passed to this method is the path to the SoundTouchWorklet, available from the build `@soundtouchjs/audio-worklet/dist/soundtouch-worklet.js`. Pathing to this file is important, and your server must include a 'Content-Type' header of `text/javascript` or `application/javascript` for the file to run properly.
 
 _**[NOTE]**: If you are using a bundler (webpack, rollup, etc) to
 bundle your app, you may require a special 'loader' for worklets/
@@ -44,12 +39,11 @@ web workers._
 
 ## Setting Up the AudioWorkletNode (SoundTouchNode)
 
-Once you have setup your worklet, and retrieved your raw (undecoded)
-file for processing, you can now setup your SoundTouchNode.
+Once you have setup your worklet, and retrieved your raw (undecoded) file for processing, you now need to create an instance of the SoundTouchNode. We provide a factory method for this, so that you can use polyfilled/ponyfilled WebAudio API classes if necessary.
 
 ```js
 //top of the file
-import { SoundTouchNode } from '@soundtouchjs/audio-context';
+import createSoundTouchNode from '@soundtouchjs/audio-context';
 //... and later
 
 // called from our `loadSource()` method, after we've retrieved the
@@ -58,7 +52,7 @@ const setupSoundtouch = function () {
   if (soundtouch) {
     soundtouch.off();
   }
-  soundtouch = new SoundTouchNode(audioCtx, buffer);
+  soundtouch = createSoundTouchNode(audioCtx, AudioWorkletNode, buffer);
   soundtouch.on('initialized', onInitialized);
 };
 ```
