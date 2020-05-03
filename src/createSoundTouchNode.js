@@ -16,46 +16,6 @@ const createSoundTouchNode = (
   arrayBuffer,
   options
 ) => {
-  let clock;
-  /**
-   * @stopClock
-   * stops the 'play' event messaging
-   */
-  const stopClock = function () {
-    if (clock) {
-      clearInterval(clock);
-    }
-  };
-
-  /**
-   * @startClock
-   * Starts the 'play' event messaging
-   * Every second a message is broadcast with details from the current process 'playHead'
-   *   'play' Event:
-   *     {Float} timePlayed - current 'playHead' position (in seconds)
-   *     {String} formattedTimePlayed - formatted 'timePlayed' in mm:ss format
-   *     {Int} - percentagePlayed - the percentage of the total duration that has played
-   */
-  const startClock = function () {
-    stopClock();
-    clock = setInterval(() => {
-      const { currentTime, duration } = this;
-      if (currentTime >= duration) {
-        this.stop();
-        return;
-      }
-      const timePlayed = new CustomEvent('play', {
-        // we calculate all values based on the one call (above) to get the currentTime
-        detail: {
-          timePlayed: currentTime,
-          formattedTimePlayed: minsSecs(currentTime),
-          percentagePlayed: parseInt((currentTime / duration) * 100, 10),
-        },
-      });
-      this.dispatchEvent(timePlayed);
-    }, 1000);
-  };
-
   class SoundTouchNode extends AudioWorkletNode {
     /**
      * @constructor
@@ -74,6 +34,8 @@ const createSoundTouchNode = (
       // setup our Worklet to Node messaging listener
       this.port.onmessage = this._messageProcessor.bind(this);
       /* play/pause time tracking variables */
+      this.sourcePosition = 0;
+      this.timePlayed = 0;
       this._startTime = 0;
       this._pauseTime = 0;
       this._playHead = 0;
@@ -94,10 +56,10 @@ const createSoundTouchNode = (
 
     /**
      * @formattedTimePlayed (getter)
-     * @return {String} the SoundTouchNode.currentTime (which is in seconds) in mm:ss format
+     * @return {String} the SoundTouchNode.timePlayed (which is in seconds) in mm:ss format
      */
     get formattedTimePlayed() {
-      return minsSecs(this.currentTime);
+      return minsSecs(this.timePlayed);
     }
 
     /**
@@ -105,7 +67,7 @@ const createSoundTouchNode = (
      * @return {Int} the percentage of how much of the audio has 'played'
      */
     get percentagePlayed() {
-      return parseInt((this.currentTime / this.duration) * 100, 10);
+      return (100 * this.sourcePosition) / (this.duration * this.sampleRate);
     }
 
     /**
@@ -115,11 +77,11 @@ const createSoundTouchNode = (
     set percentagePlayed(percentage) {
       const { duration, sampleRate } = this;
       // calculate exact sampleFrame position, in the audioBuffer
-      const sourcePosition = parseInt(
+      this.sourcePosition = parseInt(
         duration * sampleRate * (percentage / 100)
       );
       // send message to the Worklet to update the sourcePosition
-      this._updateFilterProp('sourcePosition', sourcePosition);
+      this._updateFilterProp('sourcePosition', this.sourcePosition);
       // set the SoundTouchNode.currentTime to the proper time
       this.currentTime = (this.duration * percentage) / 100;
     }
@@ -274,6 +236,7 @@ const createSoundTouchNode = (
     connectToBuffer() {
       this.bufferNode = this.context.createBufferSource();
       this.bufferNode.buffer = this.audioBuffer;
+      this.bufferNode.onended = () => console.log('song ended');
       this.bufferNode.connect(this);
       return this.bufferNode;
     }
@@ -335,7 +298,7 @@ const createSoundTouchNode = (
      * @play (async)
      * @param {Float} offset - the time (in seconds) to play from, defaulting to SoundTouchNode.currentTime
      */
-    async play(offset = this.currentTime) {
+    async play() {
       if (!this.ready) {
         throw new Error('Your processor is not ready yet');
       }
@@ -350,11 +313,10 @@ const createSoundTouchNode = (
         this._initialPlay = false;
       }
       // start the BufferSourceNode processing immediately from this time
-      this.bufferNode.start(0, offset);
+      //this.bufferNode.start(0, offset);
+      await this.context.resume();
       // reset the 'startTime' tracking variable
       this._startTime = new Date().getTime();
-      // start the 'start' event messaging, from the context of the SoundTouchNode
-      startClock.call(this);
       // set the SoundTouchNode to 'playing'
       this.playing = true;
     }
@@ -368,10 +330,9 @@ const createSoundTouchNode = (
     }
 
     async stop() {
-      // stop the 'start' event messaging, from the context of the SoundTouchNode
-      stopClock.call(this);
       // stop the BufferSourceNode from processing immediately
-      this.bufferNode.stop(0);
+      //this.bufferNode.stop(0);
+      await this.context.suspend();
       // reset time tracking variables
       this.currentTime = 0;
       this._startTime = new Date().getTime();
@@ -456,6 +417,24 @@ const createSoundTouchNode = (
      */
     _messageProcessor(eventFromWorker) {
       const { message, detail } = eventFromWorker.data;
+      const { sampleRate, timePlayed: currentTime } = this;
+
+      if (message === 'SOURCEPOSITION') {
+        this.sourcePosition = detail;
+        const timePlayed = detail / sampleRate;
+        if (currentTime !== timePlayed) {
+          this.timePlayed = timePlayed;
+          const timeEvent = new CustomEvent('play', {
+            // we calculate all values based on the one call (above) to get the currentTime
+            detail: {
+              timePlayed: this.timePlayed,
+              formattedTimePlayed: this.formattedTimePlayed,
+              percentagePlayed: this.percentagePlayed,
+            },
+          });
+          this.dispatchEvent(timeEvent);
+        }
+      }
 
       if (message === 'PROCESSOR_CONSTRUCTOR') {
         // console.log('processor constructor: ', detail);

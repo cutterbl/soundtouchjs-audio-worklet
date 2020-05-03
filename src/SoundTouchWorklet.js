@@ -164,7 +164,8 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
    * @param {*} outputs - single output of two {Float32Array(128)} channels
    */
   process(inputs, outputs) {
-    if (!this._initialized) {
+    // if not initialized and no input data then don't chew process cycles
+    if (!this._initialized || !inputs[0].length) {
       return true;
     }
 
@@ -172,6 +173,10 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
     const left = outputs[0][0];
     const right = outputs[0][1];
     const samples = this._samples;
+
+    if (!left || (left && !left.length)) {
+      return false;
+    }
 
     /**
      * Process frames into sample buffer, 128 frames at a time. This is the change from the previous process,
@@ -182,12 +187,14 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
      * 'framesExtracted' should always equal the sampleFrames (128) *2 (one for each channel). If no frames were
      * extracted, then we hit the end of the audioBuffer
      **/
-    const framesExtracted = this._filter.extract(samples, 128);
+    const framesExtracted = this._filter.extract(samples, inputs[0][0].length);
 
-    if (!framesExtracted || !left || (left && !left.length)) {
+    if (!framesExtracted) {
       this._sendMessage('PROCESSOR_END');
       return false;
     }
+
+    this._sendMessage('SOURCEPOSITION', this._filter.sourcePosition);
 
     /**
      * Write new frames to the outputs
