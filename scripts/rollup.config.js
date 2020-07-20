@@ -4,7 +4,6 @@ import resolve from '@rollup/plugin-node-resolve';
 import clear from 'rollup-plugin-clear';
 import { eslint } from 'rollup-plugin-eslint';
 import cleanup from 'rollup-plugin-cleanup';
-import { terser } from 'rollup-plugin-terser';
 import pkg from '../package.json';
 
 const banner = `/*
@@ -39,7 +38,7 @@ export default [
         file: pkg.module,
         format: 'es',
         banner: banner,
-        sourcemap: false,
+        sourcemap: true,
         exports: 'named',
       },
     ],
@@ -52,11 +51,6 @@ export default [
       babel({
         babelHelpers: 'bundled',
         configFile: path.resolve(__dirname, '../configs/babel.config.json'),
-      }),
-      terser({
-        module: true,
-        sourcemap: true,
-        output: { comments: 'all' },
       }),
       cleanup(),
     ],
@@ -80,11 +74,6 @@ export default [
       babel({
         babelHelpers: 'bundled',
         configFile: path.resolve(__dirname, '../configs/babel.config.json'),
-      }),
-      terser({
-        toplevel: true,
-        sourcemap: true,
-        output: { comments: 'all' },
       }),
       cleanup(),
     ],
