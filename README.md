@@ -41,7 +41,7 @@ Once you have setup your worklet, and retrieved your raw (undecoded) file for pr
 
 ```js
 //top of the file
-import createSoundTouchNode from '@soundtouchjs/audio-context';
+import createSoundTouchNode from '@soundtouchjs/audio-worklet';
 //... and later
 
 // called from our `loadSource()` method, after we've retrieved the
