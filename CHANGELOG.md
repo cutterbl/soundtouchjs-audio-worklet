@@ -1,4 +1,11 @@
 Changelog
+### 0.1.8 (2020-10-13)
+
+
+### Bug Fixes
+
+* Correct README ([bc3948a](https://github.com/cutterbl/soundtouchjs-audio-worklet/commit/bc3948a39f024f8987dceb0dc558cf3c492621f2))
+
 ### 0.1.7 (2020-09-19)
 
 ### 0.1.6 (2020-07-20)
