@@ -3,15 +3,24 @@
   "version": "0.1.8",
   "description": "An ES2015+ AudioWorklet implementation of the SoundTouchJS library",
   "module": "dist/soundtouch-audio-node.js",
+  "exports": {
+    ".": {
+      "import": "./dist/soundtouch-audio-node.js"
+    }
+  },
+  "files": [
+    "dist"
+  ],
   "keywords": [
     "audio",
-    "WebAudio",
-    "JavaScript",
+    "webaudio",
+    "worklet",
+    "audioworklet",
+    "audioworkletprocessor",
+    "audionode",
+    "javascript",
     "es2015"
   ],
-  "bugs": {
-    "url": "https://github.com/cutterbl/soundtouchjs-audio-worklet/issues"
-  },
   "scripts": {
     "build": "rollup -c scripts/rollup.config.js",
     "release": "standard-version",
@@ -30,12 +39,15 @@
     "type": "git",
     "url": "https://github.com/cutterbl/soundtouchjs-audio-worklet.git"
   },
+  "bugs": {
+    "url": "https://github.com/cutterbl/soundtouchjs-audio-worklet/issues"
+  },
+  "homepage": "https://github.com/cutterbl/SoundTouchJS",
   "husky": {
     "hooks": {
       "commit-msg": "if git-branch-is master; then commitlint -E HUSKY_GIT_PARAMS; fi"
     }
   },
-  "homepage": "https://github.com/cutterbl/SoundTouchJS",
   "dependencies": {},
   "devDependencies": {
     "@babel/cli": "7.10.5",
