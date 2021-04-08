@@ -157,41 +157,6 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
       this._ready = Boolean(val);
     }
 
-    /* AudioWorkletProcessor SimpleFilter params*/
-    // TODO: convert these to true AudioParams, at some point
-    /**
-     * @pitch (setter) [NO GETTER]
-     * @param {Float} pitch - the 'pitch' value to send to the SoundTouch instance in the Worklet
-     */
-    set pitch(pitch) {
-      this._updatePipeProp('pitch', pitch);
-    }
-
-    /**
-     * @pitchSemitones (setter) [NO GETTER]
-     * @param {Float} semitone - the 'pitchSemitones' value (key change) to send to the SoundTouch instance in the Worklet
-     */
-    set pitchSemitones(semitone) {
-      this._updatePipeProp('pitchSemitones', semitone);
-    }
-
-    /**
-     * @rate (setter) [NO GETTER]
-     * @param {Float} rate - the 'rate' value to send to the SoundTouch instance in the Worklet
-     */
-    set rate(rate) {
-      this._updatePipeProp('rate', rate);
-    }
-
-    /**
-     * @tempo (setter) [NO GETTER]
-     * @param {Float} tempo - the 'tempo' value to send to the SoundTouch instance in the Worklet
-     */
-    set tempo(tempo) {
-      this._updatePipeProp('tempo', tempo);
-    }
-    /* AudioWorkletProcessor SimpleFilter params*/
-
     /* event listener handling */
     /**
      * @on
@@ -229,20 +194,6 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
     onprocessorerror(err) {
       // just throw worklet errors for now
       throw err;
-    }
-
-    /**
-     * @_updatePipeProp
-     * @param {String} name - the name of the SoundTouch property to set
-     * @param {*} value - the value of the SoundTouch property to set
-     */
-    _updatePipeProp(name, value) {
-      // console.log(`Changing ${name} to ${value}`);
-      // send message to the Worklet to set the SoundTouch instance's property
-      this.port.postMessage({
-        message: 'SET_PIPE_PROP',
-        detail: { name, value },
-      });
     }
 
     /**

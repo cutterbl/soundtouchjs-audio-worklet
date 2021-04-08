@@ -30,7 +30,7 @@ import WorkletFilter from './WorkletFilter';
 class SoundTouchWorklet extends AudioWorkletProcessor {
   /**
    * @constructor
-   * @param {*} nodeOptions - currently nothing to worry about
+   * @param {options} nodeOptions - currently nothing to worry about
    */
   constructor(options) {
     super();
@@ -60,12 +60,43 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
     this.outSamples = new Float32Array(this.bufferSize * 2);
     // Setup the message listener to process messages from the AudioWorkletNode (SoundTouchNode)
     this.port.onmessage = this._messageProcessor.bind(this);
-    // Send a message to the AudioWorkletNode to let it know this object is available
-    /* this.port.postMessage({
-      message: 'PROCESSOR_READY',
-    }); */
 
     this.running = true;
+  }
+
+  /**
+   * @static parameterDescriptors
+   *
+   * Defines the AudioParam's of the processor
+   *
+   * @link https://developer.mozilla.org/en-US/docs/Web/API/AudioWorkletProcessor/parameterDescriptors
+   *
+   * @return {AudioWorkletProcessorSubclass.parameterDescriptors}
+   */
+  static get parameterDescriptors() {
+    return [
+      {
+        name: 'pitch',
+        defaultValue: 1,
+        minValue: 0.1,
+        maxValue: 2.0,
+        automationRate: 'k-rate',
+      },
+      {
+        name: 'pitchSemitones',
+        defaultValue: 0,
+        minValue: -7,
+        maxValue: 7,
+        automationRate: 'k-rate',
+      },
+      {
+        name: 'tempo',
+        defaultValue: 1,
+        minValue: 0.1,
+        maxValue: 4.0,
+        automationRate: 'k-rate',
+      },
+    ];
   }
 
   /**
@@ -77,37 +108,6 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
    */
   _messageProcessor(eventFromWorker) {
     const { message, detail } = eventFromWorker.data;
-
-    /* if (message === 'INITIALIZE_PROCESSOR') {
-      const [bufferProps, leftChannel, rightChannel] = detail;
-      this.bufferSource = new ProcessAudioBufferSource(
-        bufferProps,
-        leftChannel,
-        rightChannel
-      );
-      this._samples = new Float32Array(this.bufferSize * 2);
-      this._pipe = new SoundTouch();
-      this._filter = new SimpleFilter(this.bufferSource, this._pipe);
-      this.port.postMessage({
-        message: 'PROCESSOR_READY',
-      });
-      this._initialized = true;
-      return true;
-    } */
-
-    if (message === 'SET_PIPE_PROP' && detail) {
-      // sets the passed property value on the SoundTouch instance
-      const { name, value } = detail;
-      this._pipe[name] = value;
-      // this is debugging stuff, doing nothing if nothing is listening for it
-      this.port.postMessage({
-        message: 'PIPE_PROP_CHANGED',
-        detail: `Updated ${name} to ${
-          this._pipe[name]
-        }\ntypeof ${typeof value}`,
-      });
-      return;
-    }
 
     if (message === 'SET_FILTER_PROP' && detail) {
       // sets the passed property value on the SimpleFilter instance
@@ -175,6 +175,26 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
   }
 
   /**
+   * Sets the 'pipe' parameters for processing the audio samples.
+   *
+   * @param {object} parameters - An object containing the key/value pairs of our processors AudioParam's.
+   *                              Each AudioParam of our worklet is a 'k-rate' parameter, meaning it's value
+   *                              is applied to all 128 samples in a process cycle. The 'value' of each
+   *                              param is an array with a single value (pitch = parameters.pitch[0])
+   */
+  setupProcessParameters(parameters) {
+    // set pipe params from AudioParam's
+    const {
+      tempo: [tempoValue],
+      pitch: [pitchValue],
+      pitchSemitones: [semitonesValue],
+    } = parameters;
+    this._pipe.tempo = tempoValue;
+    this._pipe.pitch = pitchValue;
+    this._pipe.pitchSemitones = semitonesValue;
+  }
+
+  /**
    * @process()
    *
    * This is the worklet's audio processor method. From the MDN Documentation:
@@ -188,14 +208,26 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
    * just reference by their index `inputs[n][m][i]` will access n-th input,
    * m-th channel of that input, and i-th sample of that channel.
    *
-   * @param {*} inputs - completely ignored, as we get our input from the SimpleFilter
-   * @param {*} outputs - single output of two {Float32Array(128)} channels
+   * @param {array} inputs      - An array of 'inputs' connected to the node. We only access the first input
+   *                              (input[0]), and it's left (input[0][0]) and right (input[0][1]) channels.
+   *                              Each channel being a Float32Array(128) of audio samples.
+   * @param {array} outputs     - An array of 'outputs' connected to the node. We only access the first output
+   *                              (output[0]), and it's left (output[0][0]) and right (output[0][1]) channels.
+   *                              Each channel is a Float32Array(128) of audio samples, filled by processing
+   *                              our input samples.
+   * @param {object} parameters - An object containing the key/value pairs of our processors AudioParam's.
+   *                              Each AudioParam of our worklet is a 'k-rate' parameter, meaning it's value
+   *                              is applied to all 128 samples in a process cycle. The 'value' of each
+   *                              param is an array with a single value (pitch = parameters.pitch[0])
+   * @return {boolean}          - I process to continue
    */
-  process(inputs, outputs) {
+  process(inputs, outputs, parameters) {
     // if not initialized and no input data then don't chew process cycles
     if (!this.running || !inputs[0].length) {
       return true;
     }
+
+    this.setupProcessParameters(parameters);
 
     /**
      * Process frames into sample buffer, 128 frames at a time. This is the change from the previous process,

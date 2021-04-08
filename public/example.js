@@ -100,7 +100,7 @@ const loadSource = async (url) => {
   }
 };
 
-const setupContext = function () {
+const setupContext = async function () {
   try {
     audioCtx = new AudioContext();
     return audioCtx.audioWorklet.addModule('./js/soundtouch-worklet.js');
@@ -202,18 +202,25 @@ playBtn.onclick = play;
 stopBtn.onclick = () => pause();
 
 tempoSlider.addEventListener('input', function () {
-  tempoOutput.innerHTML = soundtouch.tempo = this.value;
+  const tempo = soundtouch.parameters.get('tempo');
+  tempo.setValueAtTime(this.value, audioCtx.currentTime);
+  tempoOutput.innerHTML = this.value;
 });
 
 pitchSlider.addEventListener('input', function () {
-  pitchOutput.innerHTML = soundtouch.pitch = this.value;
-  soundtouch.tempo = tempoSlider.value;
+  const pitch = soundtouch.parameters.get('pitch');
+  const tempo = soundtouch.parameters.get('tempo');
+  pitch.setValueAtTime(this.value, audioCtx.currentTime);
+  tempo.setValueAtTime(tempoSlider.value, audioCtx.currentTime);
+  pitchOutput.innerHTML = this.value;
 });
 
 keySlider.addEventListener('input', function () {
-  soundtouch.pitchSemitones = this.value;
+  const semitones = soundtouch.parameters.get('pitchSemitones');
+  const tempo = soundtouch.parameters.get('tempo');
+  semitones.setValueAtTime(this.value, audioCtx.currentTime);
+  tempo.setValueAtTime(tempoSlider.value, audioCtx.currentTime);
   keyOutput.innerHTML = this.value / 2;
-  soundtouch.tempo = tempoSlider.value;
 });
 
 volumeSlider.addEventListener('input', function () {
