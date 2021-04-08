@@ -1,7 +1,5 @@
 import minsSecs, { diffSecs } from './minsSecs';
 
-const noop = () => {};
-
 /** Documentation can be found in the `/docs/SoundTouchNode.md` file */
 
 /**
@@ -12,40 +10,29 @@ const noop = () => {};
  * @param {*} options - not really used yet
  * @return {SoundTouchNode} - a SoundTouchNode instance
  */
-const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
+const createSoundTouchNode = (
+  audioCtx,
+  AudioWorkletNode,
+  arrayBuffer,
+  options
+) => {
   class SoundTouchNode extends AudioWorkletNode {
     /**
      * @constructor
      * @param {BaseAudioContext} context The associated BaseAudioContext.
+     * @param {ArrayBuffer} arrayBuffer fixed length raw binary data buffer (undecoded audio)
      * @param {AudioWorkletNodeOptions} options User-supplied options for
      * AudioWorkletNode.
      */
-    constructor(context, options) {
+    constructor(context, arrayBuffer, options) {
       super(context, 'soundtouch-worklet', options);
 
-      this.name = this.constructor.name;
-
-      Object.assign(this, options.processorOptions);
-      /**
-       * sampleRate
-       * duration
-       * bufferLength
-       * numberOfChannels
-       */
-
-      this.processorOptions = options.processorOptions;
-      this.sampleRate = this.processorOptions.sampleRate;
-
+      // Copy the passed ArrayBuffer, so it doesn't become detached and can be reused
+      this._arrayBuffer = arrayBuffer.slice(0);
       // an array of all of the listeners
       this.listeners = [];
       // setup our Worklet to Node messaging listener
       this.port.onmessage = this._messageProcessor.bind(this);
-
-      this._onUpdate = noop;
-      this._onEnd = noop;
-
-      this.running = true;
-
       /* play/pause time tracking variables */
       this.sourcePosition = 0;
       this.timePlayed = 0;
@@ -57,7 +44,6 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
       this._ready = false;
       // for standardized-audio-context implementation
       this._initialPlay = true;
-      this.ready = true;
     }
 
     /**
@@ -80,15 +66,15 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
      * @percentagePlayed (getter)
      * @return {Int} the percentage of how much of the audio has 'played'
      */
-    /* get percentagePlayed() {
+    get percentagePlayed() {
       return (100 * this.sourcePosition) / (this.duration * this.sampleRate);
-    } */
+    }
 
     /**
      * @percentagePlayed (setter)
      * @param {Float} percentage - the percentage at which to set the 'playHead'
      */
-    /* set percentagePlayed(percentage) {
+    set percentagePlayed(percentage) {
       const { duration, sampleRate } = this;
       // calculate exact sampleFrame position, in the audioBuffer
       this.sourcePosition = parseInt(
@@ -98,7 +84,7 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
       this._updateFilterProp('sourcePosition', this.sourcePosition);
       // set the SoundTouchNode.currentTime to the proper time
       this.currentTime = (this.duration * percentage) / 100;
-    } */
+    }
 
     /**
      * @currentTime (getter)
@@ -110,20 +96,20 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
      * from the last known 'playHead' position plus the difference in 'startTime'
      * and 'now' (both are in milliseconds, so we calculate the difference in seconds)
      */
-    /* get currentTime() {
+    get currentTime() {
       if (!this.playing) {
         return this._playHead;
       }
       return this._playHead + diffSecs(this._startTime, new Date().getTime());
-    } */
+    }
 
     /**
      * @currentTime (setter)
      * @param {Float} val - the time (in seconds) at which to set the 'playHead'
      */
-    /* set currentTime(val) {
+    set currentTime(val) {
       this._playHead = val;
-    } */
+    }
 
     /**
      * @playing (getter)
@@ -155,6 +141,54 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
      */
     set ready(val) {
       this._ready = Boolean(val);
+    }
+
+    /**
+     * @sampleRate (getter)
+     * @return {Int|undefined} if the audioBuffer has been set it returns the buffer's 'sampleRate',
+     *   otherwise returns undefined
+     */
+    get sampleRate() {
+      if (this.audioBuffer) {
+        return this.audioBuffer.sampleRate;
+      }
+      return undefined;
+    }
+
+    /**
+     * @duration (getter)
+     * @return {Float|undefined} if the audioBuffer has been set it returns the buffer's 'duration'
+     *   (in seconds), otherwise returns undefined
+     */
+    get duration() {
+      if (this.audioBuffer) {
+        return this.audioBuffer.duration;
+      }
+      return undefined;
+    }
+
+    /**
+     * @bufferLength (getter)
+     * @return {Int|undefined} if the audioBuffer has been set it returns the buffer's 'length',
+     *   otherwise returns undefined
+     */
+    get bufferLength() {
+      if (this.audioBuffer) {
+        return this.audioBuffer.length;
+      }
+      return undefined;
+    }
+
+    /**
+     * @numberOfChannels (getter)
+     * @return {Int|undefined} if the audioBuffer has been set it returns the buffer's 'numberOfChannels'
+     *   otherwise returns undefined
+     */
+    get numberOfChannels() {
+      if (this.audioBuffer) {
+        return this.audioBuffer.numberOfChannels;
+      }
+      return undefined;
     }
 
     /* AudioWorkletProcessor SimpleFilter params*/
@@ -191,6 +225,121 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
       this._updatePipeProp('tempo', tempo);
     }
     /* AudioWorkletProcessor SimpleFilter params*/
+
+    /**
+     * @connectToBuffer
+     * Creates a BufferSourceNode and attaches the 'audioBuffer' that was created by
+     * 'decodeAudioData()'. Then it connects the SoundTouchNode to the BufferSourceNode.
+     * This means that audio travels FROM the BufferSourceNode TO the SoundTouchNode.
+     * As the 'target', SoundTouchNode receives sound data to process it.
+     */
+    connectToBuffer() {
+      this.bufferNode = this.context.createBufferSource();
+      this.bufferNode.buffer = this.audioBuffer;
+      this.bufferNode.onended = () => console.log('song ended');
+      this.bufferNode.connect(this);
+      return this.bufferNode;
+    }
+
+    /**
+     * @disconnectFrom Buffer
+     * This severs the connection between the BufferSourceNode and the SoundTouchNode
+     */
+    disconnectFromBuffer() {
+      this.bufferNode.disconnect();
+    }
+
+    /**
+     * @handleAudioData
+     * @param {AudioBuffer} audioBuffer - created by AudioContext.decodeAudioData()
+     */
+    handleAudioData(audioBuffer) {
+      this.audioBuffer = audioBuffer;
+      // creates a simple data structure to transfer to the Worklet, based on the audioBuffer
+      this.port.postMessage({
+        message: 'INITIALIZE_PROCESSOR',
+        detail: this.createBaseArray(audioBuffer),
+      });
+    }
+
+    /**
+     * @createBaseArray
+     * @param {AudioBuffer} audioBuffer - created by AudioContext.decodeAudioData()
+     * @return {Array} an array of values to transfer to the Worklet
+     *   Array[0]
+     *     {Int} sampleRate - the sampleRate of the audioBuffer
+     *     {Float} duration - the duration of the audioBuffer (in seconds)
+     *     {Int} bufferLength - the length of the audioBuffer
+     *     {Int} numberOfChannels - the numberOfChannels of the audioBuffer
+     *   Array[1]
+     *     {Float32Array} - the left channel channelData of the audioBuffer
+     *   Array[2]
+     *     {Float32Array} - the right channel channelData of the audioBuffer
+     *       if only a single channel in the input, it will send the left channel
+     *       channelData as the right channel
+     */
+    createBaseArray(audioBuffer) {
+      return [
+        {
+          sampleRate: this.sampleRate,
+          duration: this.duration,
+          bufferLength: this.bufferLength,
+          numberOfChannels: this.numberOfChannels,
+        },
+        audioBuffer.getChannelData(0),
+        this.numberOfChannels > 1
+          ? audioBuffer.getChannelData(1)
+          : audioBuffer.getChannelData(0),
+      ];
+    }
+
+    /* play controls */
+    /**
+     * @play (async)
+     * @param {Float} offset - the time (in seconds) to play from, defaulting to SoundTouchNode.currentTime
+     */
+    async play() {
+      if (!this.ready) {
+        throw new Error('Your processor is not ready yet');
+      }
+      if (this.playing) {
+        this.stop(true);
+      }
+      // due to issue with standardized-audio-implementation
+      if (this._initialPlay) {
+        if (this._playHead === 0) {
+          this.percentagePlayed = 0;
+        }
+        this._initialPlay = false;
+      }
+      // start the BufferSourceNode processing immediately from this time
+      //this.bufferNode.start(0, offset);
+      await this.context.resume();
+      // reset the 'startTime' tracking variable
+      this._startTime = new Date().getTime();
+      // set the SoundTouchNode to 'playing'
+      this.playing = true;
+    }
+
+    pause() {
+      // get the current (derived) SoundTouchNode.currentTime
+      const currTime = this.currentTime;
+      this.stop();
+      // 'stop()' reset the SoundTouchNode.currentTime, so we set it back
+      this.currentTime = currTime;
+    }
+
+    async stop() {
+      // stop the BufferSourceNode from processing immediately
+      //this.bufferNode.stop(0);
+      await this.context.suspend();
+      // reset time tracking variables
+      this.currentTime = 0;
+      this._startTime = new Date().getTime();
+      // set the SoundTouchNode to not 'playing'
+      this.playing = false;
+    }
+    /* end play controls */
 
     /* event listener handling */
     /**
@@ -272,7 +421,6 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
 
       if (message === 'SOURCEPOSITION') {
         this.sourcePosition = detail;
-
         const timePlayed = detail / sampleRate;
         if (currentTime !== timePlayed) {
           this.timePlayed = timePlayed;
@@ -281,11 +429,23 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
             detail: {
               timePlayed: this.timePlayed,
               formattedTimePlayed: this.formattedTimePlayed,
-              //percentagePlayed: this.percentagePlayed,
+              percentagePlayed: this.percentagePlayed,
             },
           });
           this.dispatchEvent(timeEvent);
         }
+      }
+
+      if (message === 'PROCESSOR_CONSTRUCTOR') {
+        // console.log('processor constructor: ', detail);
+        // The AudioWorkletProcessor object is instantiated, so we can now decode the raw audio.
+        // The 'handleAudioData()' method will send a message back to the AudioWorkletProcessor
+        this.context.decodeAudioData(
+          this._arrayBuffer,
+          (audioData) => this.handleAudioData(audioData),
+          (err) => console.log('[decodeAudioData ERROR] ', err)
+        );
+        return;
       }
 
       if (message === 'PROCESSOR_READY') {
@@ -294,7 +454,7 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
          * to begin processing, so the AudioWorkletNode (SoundTouchNode) is now
          * 'ready' for use
          */
-        /* this.ready = true;
+        this.ready = true;
 
         // tell the using interface that the SoundTouchNode is 'ready'
         // 'detail' is empty, but there for enabling debugging
@@ -307,7 +467,7 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
 
         // preferred method of letting the interface know we're ready
         const init = new CustomEvent('initialized', detail);
-        this.dispatchEvent(init); */
+        this.dispatchEvent(init);
         return;
       }
 
@@ -316,13 +476,13 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
        * that it's done with all of the available data in the audioBuffer
        */
       if (message === 'PROCESSOR_END') {
-        //this.stop();
+        this.stop();
         this.percentagePlayed = 0;
         const endOfPlay = new CustomEvent('end', {
           detail: {
             timePlayed: this.currentTime,
             formattedTimePlayed: this.formattedTimePlayed,
-            //percentagePlayed: this.percentagePlayed,
+            percentagePlayed: this.percentagePlayed,
           },
         });
         this.dispatchEvent(endOfPlay);
@@ -333,7 +493,7 @@ const createSoundTouchNode = (audioCtx, AudioWorkletNode, options) => {
     }
   }
 
-  return new SoundTouchNode(audioCtx, options);
+  return new SoundTouchNode(audioCtx, arrayBuffer, options);
 };
 
 export default createSoundTouchNode;

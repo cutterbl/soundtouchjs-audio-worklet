@@ -66,33 +66,19 @@ const onInitialized = (detail) => {
 };
 
 const updateProgress = (detail) => {
-  /* currTime.innerHTML = detail.formattedTimePlayed;
-  progressMeter.value = detail.percentagePlayed; */
-};
-
-const decodeAudio = (arrayBuffer) => {
-  return new Promise((resolve, reject) => {
-    audioCtx.decodeAudioData(
-      arrayBuffer,
-      (audioData) => resolve(audioData),
-      (err) => reject(err)
-    );
-  });
+  currTime.innerHTML = detail.formattedTimePlayed;
+  progressMeter.value = detail.percentagePlayed;
 };
 
 const loadSource = async (url) => {
-  /* if (is_playing) {
+  if (is_playing) {
     pause(true);
-  } */
+  }
   try {
     playBtn.setAttribute('disabled', 'disabled');
 
     await setupContext();
-    // fetches file, reads response as an arrayBuffer,
-    // then decodes that to an audioBuffer
-    buffer = await fetch(url)
-      .then((resp) => resp.arrayBuffer())
-      .then(decodeAudio);
+    buffer = await fetch(url).then((resp) => resp.arrayBuffer());
     setupSoundtouch();
     loadBtn.setAttribute('disabled', 'disabled');
   } catch (err) {
@@ -100,7 +86,7 @@ const loadSource = async (url) => {
   }
 };
 
-const setupContext = function () {
+const setupContext = async function () {
   try {
     audioCtx = new AudioContext();
     return audioCtx.audioWorklet.addModule('./js/soundtouch-worklet.js');
@@ -109,36 +95,12 @@ const setupContext = function () {
   }
 };
 
-const buildNodeOptions = function (audioBuffer) {
-  if (!audioBuffer) {
-    throw new Error('No audioBuffer');
-  }
-  const {
-    sampleRate,
-    duration,
-    length: bufferLength,
-    numberOfChannels,
-  } = audioBuffer;
-  return {
-    processorOptions: {
-      sampleRate,
-      duration,
-      bufferLength,
-      numberOfChannels,
-      inputFrames: 0,
-      updateInterval: 1.0,
-    },
-  };
-};
-
 const setupSoundtouch = function () {
   if (soundtouch) {
     soundtouch.off();
   }
-  const options = buildNodeOptions(buffer);
-  soundtouch = createSoundTouchNode(audioCtx, AudioWorkletNode, options);
-  //soundtouch.on('initialized', onInitialized);
-  onInitialized();
+  soundtouch = createSoundTouchNode(audioCtx, AudioWorkletNode, buffer);
+  soundtouch.on('initialized', onInitialized);
 };
 
 const load = function () {
@@ -152,20 +114,12 @@ const load = function () {
 let is_playing = false;
 const play = function () {
   if (is_ready) {
-    if (audioCtx.state === 'suspended') {
-      audioCtx.resume();
-    }
-    bufferNode = audioCtx.createBufferSource();
-    bufferNode.buffer = buffer;
+    bufferNode = soundtouch.connectToBuffer(); // AudioBuffer goes to SoundTouchNode
     gainNode = audioCtx.createGain();
-    bufferNode.connect(gainNode); // AudioBuffer goes to SoundTouchNode
-    //soundtouch.connect(gainNode); // SoundTouch goes to the GainNode
-    //bufferNode.connect(gainNode);
-    gainNode.connect(soundtouch); // GainNode goes to the AudioDestinationNode
-    soundtouch.connect(audioCtx.destination);
+    soundtouch.connect(gainNode); // SoundTouch goes to the GainNode
+    gainNode.connect(audioCtx.destination); // GainNode goes to the AudioDestinationNode
 
-    //soundtouch.play();
-    bufferNode.start();
+    soundtouch.play();
 
     is_playing = true;
     playBtn.setAttribute('disabled', 'disabled');
@@ -175,7 +129,7 @@ const play = function () {
 
 const pause = function (stop = false, override = false) {
   if (bufferNode) {
-    /* gainNode.disconnect(); // disconnect the DestinationNode
+    gainNode.disconnect(); // disconnect the DestinationNode
     soundtouch.disconnect(); // disconnect the AudioGainNode
     soundtouch.disconnectFromBuffer(); // disconnect the SoundTouchNode
 
@@ -183,12 +137,7 @@ const pause = function (stop = false, override = false) {
       soundtouch.stop();
     } else {
       soundtouch.pause();
-    } */
-    console.log(`Stopped at ${audioCtx.currentTime}`);
-    bufferNode.stop();
-    soundtouch.disconnect();
-    gainNode.disconnect();
-    bufferNode.disconnect();
+    }
 
     stopBtn.setAttribute('disabled', 'disabled');
     if (is_playing || override) {
