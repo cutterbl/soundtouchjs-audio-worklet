@@ -171,7 +171,7 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
 
     // assign to function locals for quick access
     const left = outputs[0][0];
-    const right = outputs[0][1];
+    const right = outputs[0].length > 1 ? outputs[0][1] : outputs[0][0];
     const samples = this._samples;
 
     if (!left || (left && !left.length)) {
@@ -189,7 +189,7 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
      **/
     const framesExtracted = this._filter.extract(samples, inputs[0][0].length);
 
-    if (!framesExtracted) {
+    if (isNaN(samples[0]) || !framesExtracted) {
       this._sendMessage('PROCESSOR_END');
       return false;
     }
@@ -207,6 +207,10 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
       left[i] = samples[i * 2];
       // odd frames to the right (starting with 1)
       right[i] = samples[i * 2 + 1];
+      if (isNaN(left[i]) || isNaN(right[i])) {
+        left[i] = 0;
+        right[i] = 0;
+      }
     }
 
     return true;

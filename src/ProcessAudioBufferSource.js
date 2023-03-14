@@ -43,6 +43,6 @@ export default class ProcessAudioBufferSource {
       target[i * 2] = this.leftChannel[i + position];
       target[i * 2 + 1] = this.rightChannel[i + position];
     }
-    return Math.min(numFrames, this.leftChannel.length - position);
+    return numFrames;
   }
 }
