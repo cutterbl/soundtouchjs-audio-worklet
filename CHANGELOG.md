@@ -1,4 +1,11 @@
 Changelog
+### 0.1.17 (2023-03-14)
+
+
+### Bug Fixes
+
+* Correct early audio cutoff and handle single channel audio ([#20](https://github.com/cutterbl/soundtouchjs-audio-worklet/issues/20)) ([cee578f](https://github.com/cutterbl/soundtouchjs-audio-worklet/commit/cee578f807c8a564813f7461e3518c18c26cd742))
+
 ### 0.1.16 (2022-05-03)
 
 ### 0.1.15 (2022-05-03)

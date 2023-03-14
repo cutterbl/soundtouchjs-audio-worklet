@@ -1,6 +1,6 @@
 {
   "name": "@soundtouchjs/audio-worklet",
-  "version": "0.1.16",
+  "version": "0.1.17",
   "description": "An ES2015+ AudioWorklet implementation of the SoundTouchJS library",
   "module": "dist/soundtouch-audio-node.js",
   "exports": {
