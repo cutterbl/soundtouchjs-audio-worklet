@@ -1,4 +1,15 @@
 Changelog
+## 0.2.0 (2025-03-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* This changes everything we had before. See README.md for more information.
+
+### Features
+
+* Full AudioWorkletProcessor ([#26](https://github.com/cutterbl/soundtouchjs-audio-worklet/issues/26)) ([e331387](https://github.com/cutterbl/soundtouchjs-audio-worklet/commit/e331387c0d0572785a3f77cdd15f24eff3ea5325))
+
 ### 0.1.17 (2023-03-14)
 
 
