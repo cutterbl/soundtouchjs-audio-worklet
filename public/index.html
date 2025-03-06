@@ -1,153 +1,40 @@
+<!-- index.html served from web server’s root -->
 <!DOCTYPE html>
 <html>
-  <head>
-    <title>soundtouch.js demo</title>
-    <style type="text/css">
-      body {
-        background: grey;
-        line-height: 30px;
-      }
-
-      input,
-      button {
-        display: block;
-      }
-      .progress,
-      #progressMeter {
-        width: 400px;
-      }
-
-      .progress #duration {
-        position: relative;
-        float: right;
-      }
-    </style>
-  </head>
   <body>
-    <button id="load">Load</button>
-    <button id="play" disabled>Play</button>
-    <button id="stop" disabled>Pause</button>
-    <div class="progress">
-      <div><span id="currentTime">0:00</span><span id="duration"></span></div>
-      <progress id="progressMeter" value="0" max="100"></progress>
-    </div>
-    Tempo:
-    <input
-      type="range"
-      autofocus="true"
-      min="0.1"
-      max="4.0"
-      name="tempoSlider"
-      value="1.0"
-      id="tempoSlider"
-      step="0.01"
-      list="temporange"
-    />
-    <datalist id="temporange">
-      <option value="0.1" label="0"> </option>
-      <option value="0.5"> </option>
-      <option value="1.0"> </option>
-      <option value="1.5"> </option>
-      <option value="2.0"> </option>
-      <option value="2.5"> </option>
-      <option value="3.0"> </option>
-      <option value="3.5"> </option>
-      <option value="4.0" label="4"> </option>
-    </datalist>
-
-    <div id="tempo"></div>
-    Pitch:
-    <input
-      type="range"
-      autofocus="true"
-      min="0.1"
-      max="2.0"
-      name="pitchSlider"
-      value="1.0"
-      id="pitchSlider"
-      step="0.01"
-      list="pitchrange"
-    />
-    <datalist id="pitchrange">
-      <option value="0.1" label="0"> </option>
-      <option value="0.5"> </option>
-      <option value="1.0"> </option>
-      <option value="1.5"> </option>
-      <option value="2.0" label="2"> </option>
-    </datalist>
-
-    <div id="pitch"></div>
-
-    Change Key:
-    <input
-      type="range"
-      autofocus="true"
-      min="-7.0"
-      max="7.0"
-      name="keySlider"
-      value="0"
-      id="keySlider"
-      step="1"
-      list="keyrange"
-    />
-    <datalist id="keyrange">
-      <option value="-7"> </option>
-      <option value="-6"> </option>
-      <option value="-5"> </option>
-      <option value="-4"> </option>
-      <option value="-3"> </option>
-      <option value="-2"> </option>
-      <option value="-1"> </option>
-      <option value="0"> </option>
-      <option value="1"> </option>
-      <option value="2"> </option>
-      <option value="3"> </option>
-      <option value="4"> </option>
-      <option value="5"> </option>
-      <option value="6"> </option>
-      <option value="7"> </option>
-    </datalist>
-
-    <div id="key"></div>
-
-    Volume:
-    <input
-      type="range"
-      autofocus="true"
-      min="0.0"
-      max="10.0"
-      name="volumeSlider"
-      value="1.0"
-      id="volumeSlider"
-      step="0.01"
-      list="volumerange"
-    />
-    <datalist id="volumerange">
-      <option value="0.0" label="0"> </option>
-      <option value="0.5"> </option>
-      <option value="1.0"> </option>
-      <option value="1.5"> </option>
-      <option value="2.0" label="2"> </option>
-      <option value="2.5"> </option>
-      <option value="3.0"> </option>
-      <option value="3.5"> </option>
-      <option value="4.0" label="4"> </option>
-      <option value="4.5"> </option>
-      <option value="5.0"> </option>
-      <option value="5.5"> </option>
-      <option value="6.0" label="6"> </option>
-      <option value="6.5"> </option>
-      <option value="7.0"> </option>
-      <option value="7.5"> </option>
-      <option value="8.0" label="8"> </option>
-      <option value="8.5"> </option>
-      <option value="9.0"> </option>
-      <option value="9.5"> </option>
-      <option value="10.0" label="10"> </option>
-    </datalist>
-
-    <div id="volume"></div>
+    <audio src="/bensound-actionable.mp3" preload="none" controls></audio>
+    <form>
+      <label>Pitch <input id="pitch" type="range" min="0.25" max="4.0" step="0.01" value="1" /></label>
+      <label>Tempo <input id="tempo" type="range" min="0.25" max="4.0" step="0.01" value="1" /></label>
+      <label>Rate <input id="rate" type="range" min="0.25" max="4.0" step="0.01" value="1" /></label>
+      <label>Key <input
+        type="range"
+        min="-7.0"
+        max="7.0"
+        value="0"
+        id="key"
+        step="1"
+        list="keyrange"
+      />
+      <datalist id="keyrange">
+        <option value="-7"> </option>
+        <option value="-6"> </option>
+        <option value="-5"> </option>
+        <option value="-4"> </option>
+        <option value="-3"> </option>
+        <option value="-2"> </option>
+        <option value="-1"> </option>
+        <option value="0"> </option>
+        <option value="1"> </option>
+        <option value="2"> </option>
+        <option value="3"> </option>
+        <option value="4"> </option>
+        <option value="5"> </option>
+        <option value="6"> </option>
+        <option value="7"> </option>
+      </datalist></label>
+      <button id="reset" type="reset">Reset</button>
+    </form>
+    <script type="module" src="example.js"></script>
   </body>
-  <script src="https://unpkg.com/@babel/polyfill/dist/polyfill.min.js"></script>
-  <script type="module" src="example.js"></script>
 </html>
