@@ -1,183 +1,86 @@
-/**
- * Loosely based on an example from:
- * http://onlinetonegenerator.com/pitch-shifter.html
- */
-
-// This is pulling SoundTouchJS from the local file system. See the README for proper usage.
-import createSoundTouchNode from './js/soundtouch-audio-node.js';
-
-/**
- * https://github.com/chrisguttandin/standardized-audio-context
- * To see this working with the standaridized-audio-context ponyfill,
- * uncomment these two lines
- */
-//import sac from 'https://jspm.dev/standardized-audio-context';
-//const { AudioContext, AudioWorkletNode } = sac;
-
-const loadBtn = document.getElementById('load');
-const playBtn = document.getElementById('play');
-const stopBtn = document.getElementById('stop');
-const tempoSlider = document.getElementById('tempoSlider');
-const tempoOutput = document.getElementById('tempo');
-tempoOutput.innerHTML = tempoSlider.value;
-const pitchSlider = document.getElementById('pitchSlider');
-const pitchOutput = document.getElementById('pitch');
-pitchOutput.innerHTML = pitchSlider.value;
-const keySlider = document.getElementById('keySlider');
-const keyOutput = document.getElementById('key');
-keyOutput.innerHTML = keySlider.value;
-const volumeSlider = document.getElementById('volumeSlider');
-const volumeOutput = document.getElementById('volume');
-volumeOutput.innerHTML = volumeSlider.value;
-const currTime = document.getElementById('currentTime');
-const duration = document.getElementById('duration');
-const progressMeter = document.getElementById('progressMeter');
-
 let audioCtx;
-let gainNode;
 let soundtouch;
-let buffer;
-let bufferNode;
-let is_ready = false;
+const audioEl = document.querySelector('audio');
+const pitchEl = document.getElementById('pitch');
+const tempoEl = document.getElementById('tempo');
+const rateEl = document.getElementById('rate');
+const keyEl = document.getElementById('key');
+const resetEl = document.getElementById('reset');
 
-const resetControls = () => {
-  playBtn.setAttribute('disabled', 'disabled');
-  stopBtn.setAttribute('disabled', 'disabled');
-  soundtouch.tempo = tempoSlider.value;
-  soundtouch.pitch = pitchSlider.value;
-  soundtouch.percentagePlayed = 0;
-  progressMeter.value = 0;
-  duration.innerHTML = soundtouch.formattedDuration;
+const onPitchChange = ({ target: { value } }) => {
+  soundtouch.parameters.get('pitch').value = +value;
 };
 
-const onEnd = (detail) => {
-  resetControls();
-  updateProgress(detail);
-  setupSoundtouch();
+const onTempoChange = ({ target: { value } }) => {
+  // ?
+  audioEl.preservesPitch = true;
+  audioEl.playbackRate = +value;
 };
 
-const onInitialized = (detail) => {
-  console.log('PitchSoundtouch Initialized ', detail);
-  resetControls();
-  playBtn.removeAttribute('disabled');
-  soundtouch.on('play', updateProgress);
-  soundtouch.on('end', onEnd);
-  is_ready = true;
+const onRateChange = ({ target: { value } }) => {
+  // ?
+  audioEl.preservesPitch = false;
+  audioEl.playbackRate = +value;
 };
 
-const updateProgress = (detail) => {
-  currTime.innerHTML = detail.formattedTimePlayed;
-  progressMeter.value = detail.percentagePlayed;
+const onKeyChange = ({ target: { value } }) => {
+  soundtouch.parameters.get('pitchSemitones').value = +value;
 };
 
-const loadSource = async (url) => {
-  if (is_playing) {
-    pause(true);
-  }
-  try {
-    playBtn.setAttribute('disabled', 'disabled');
-
-    await setupContext();
-    buffer = await fetch(url).then((resp) => resp.arrayBuffer());
-    setupSoundtouch();
-    loadBtn.setAttribute('disabled', 'disabled');
-  } catch (err) {
-    console.error('[loadSource] ', err);
-  }
-};
-
-const setupContext = function () {
-  try {
-    audioCtx = new AudioContext();
-    return audioCtx.audioWorklet.addModule('./js/soundtouch-worklet.js');
-  } catch (err) {
-    console.error('[setupContext] ', err);
-  }
-};
-
-const setupSoundtouch = function () {
+const onReset = () => {
   if (soundtouch) {
-    soundtouch.off();
+    soundtouch.parameters.get('pitch').value = 1;
+    soundtouch.parameters.get('pitchSemitones').value = 0;
   }
-  soundtouch = createSoundTouchNode(audioCtx, AudioWorkletNode, buffer);
-  soundtouch.on('initialized', onInitialized);
+  audioEl.playbackRate = 1;
 };
 
-const load = function () {
-  try {
-    loadSource('./bensound-actionable.mp3');
-  } catch (err) {
-    console.log(err);
+function setupFieldListeners(soundtouch) {
+  if (!soundtouch) {
+    return;
   }
+  soundtouch.parameters.get('pitch').value = pitchEl.value;
+  audioEl.preservesPitch = true;
+  audioEl.playbackRate = tempoEl.value;
+  audioEl.preservesPitch = false;
+  audioEl.playbackRate = rateEl.value;
+  soundtouch.parameters.get('pitchSemitones').value = keyEl.value;
+  pitchEl.addEventListener('input', onPitchChange);
+  tempoEl.addEventListener('input', onTempoChange);
+  rateEl.addEventListener('input', onRateChange);
+  keyEl.addEventListener('input', onKeyChange);
+  resetEl.addEventListener('click', onReset);
+}
+
+function removeFieldListeners() {
+  pitchEl.removeEventListener('input', onPitchChange);
+  tempoEl.removeEventListener('input', onTempoChange);
+  rateEl.removeEventListener('input', onRateChange);
+  keyEl.removeEventListener('input', onKeyChange);
+  resetEl.removeEventListener('click', onReset);
+}
+
+const onPlay = async () => {
+  if (audioCtx) return;
+  audioCtx = new AudioContext();
+  // add worklet asynchronously from your public folder:
+  await audioCtx.audioWorklet.addModule('./js/soundtouch-worklet.js');
+  // or if you are using Vite:
+  // await audioCtx.audioWorklet.addModule(new URL('./soundtouch.js', import.meta.url));
+  soundtouch = new AudioWorkletNode(audioCtx, 'soundtouch-processor');
+  soundtouch.connect(audioCtx.destination);
+  // create node from audio element:
+  const audioNode = audioCtx.createMediaElementSource(audioEl);
+  audioNode.connect(soundtouch);
+  setupFieldListeners(soundtouch);
 };
 
-let is_playing = false;
-const play = function () {
-  if (is_ready) {
-    bufferNode = soundtouch.connectToBuffer(); // AudioBuffer goes to SoundTouchNode
-    gainNode = audioCtx.createGain();
-    soundtouch.connect(gainNode); // SoundTouch goes to the GainNode
-    gainNode.connect(audioCtx.destination); // GainNode goes to the AudioDestinationNode
+audioEl.addEventListener('play', onPlay);
 
-    soundtouch.play();
-
-    is_playing = true;
-    playBtn.setAttribute('disabled', 'disabled');
-    stopBtn.removeAttribute('disabled');
-  }
-};
-
-const pause = function (stop = false, override = false) {
-  if (bufferNode) {
-    gainNode.disconnect(); // disconnect the DestinationNode
-    soundtouch.disconnect(); // disconnect the AudioGainNode
-    soundtouch.disconnectFromBuffer(); // disconnect the SoundTouchNode
-
-    if (stop) {
-      soundtouch.stop();
-    } else {
-      soundtouch.pause();
-    }
-
-    stopBtn.setAttribute('disabled', 'disabled');
-    if (is_playing || override) {
-      playBtn.removeAttribute('disabled');
-    }
-  }
-};
-
-loadBtn.onclick = load;
-playBtn.onclick = play;
-stopBtn.onclick = () => pause();
-
-tempoSlider.addEventListener('input', function () {
-  tempoOutput.innerHTML = soundtouch.tempo = this.value;
-});
-
-pitchSlider.addEventListener('input', function () {
-  pitchOutput.innerHTML = soundtouch.pitch = this.value;
-  soundtouch.tempo = tempoSlider.value;
-});
-
-keySlider.addEventListener('input', function () {
-  soundtouch.pitchSemitones = this.value;
-  keyOutput.innerHTML = this.value / 2;
-  soundtouch.tempo = tempoSlider.value;
-});
-
-volumeSlider.addEventListener('input', function () {
-  volumeOutput.innerHTML = gainNode.gain.value = this.value;
-});
-
-progressMeter.addEventListener('click', function (event) {
-  const pos = event.target.getBoundingClientRect();
-  const relX = event.pageX - pos.x;
-  const perc = (relX * 100) / event.target.offsetWidth;
-  pause(null, true);
-  soundtouch.percentagePlayed = perc;
-  progressMeter.value = perc;
-  currTime.innerHTML = soundtouch.formattedTimePlayed;
-  if (is_playing) {
-    play();
-  }
+window.addEventListener('beforeunload', () => {
+  audioEl.removeEventListener('play', onPlay);
+  removeFieldListeners();
+  audioCtx?.close();
+  audioCtx = null;
+  soundtouch = null;
 });

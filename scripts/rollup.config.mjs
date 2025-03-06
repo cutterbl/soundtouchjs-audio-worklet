@@ -1,10 +1,13 @@
 import path from 'path';
+import * as url from 'url';
 import babel from '@rollup/plugin-babel';
 import resolve from '@rollup/plugin-node-resolve';
 import clear from 'rollup-plugin-clear';
-import { eslint } from 'rollup-plugin-eslint';
+import eslint from '@rollup/plugin-eslint';
 import cleanup from 'rollup-plugin-cleanup';
-import pkg from '../package.json';
+import pkg from '../package.json' with { type: 'json' };
+
+const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
 
 const banner = `/*
 * SoundTouch Audio Worklet v${pkg.version} AudioWorklet using the
@@ -32,30 +35,6 @@ const banner = `/*
 
 export default [
   {
-    input: path.join(__dirname, '../src/createSoundTouchNode.js'),
-    output: [
-      {
-        file: pkg.module,
-        format: 'es',
-        banner: banner,
-        sourcemap: true,
-        exports: 'named',
-      },
-    ],
-    plugins: [
-      clear({
-        targets: [path.join(__dirname, '../dist')],
-        watch: true,
-      }),
-      eslint(),
-      babel({
-        babelHelpers: 'bundled',
-        configFile: path.resolve(__dirname, '../configs/babel.config.json'),
-      }),
-      cleanup(),
-    ],
-  },
-  {
     input: path.join(__dirname, '../src/SoundTouchWorklet.js'),
     output: [
       {
@@ -67,13 +46,19 @@ export default [
       },
     ],
     plugins: [
+      clear({
+        targets: [path.join(__dirname, '../dist')],
+        watch: true,
+      }),
       resolve({
         browser: true,
       }),
-      eslint(),
+      eslint({
+        overrideConfigFile: path.resolve(__dirname, '../.eslintrc.js'),
+      }),
       babel({
         babelHelpers: 'bundled',
-        configFile: path.resolve(__dirname, '../configs/babel.config.json'),
+        configFile: path.resolve(__dirname, '../babel.config.js'),
       }),
       cleanup(),
     ],
