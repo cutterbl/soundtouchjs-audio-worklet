@@ -52,6 +52,11 @@ class SoundTouchWorklet extends AudioWorkletProcessor {
     for (let i = 0; i < leftInput.length; i++) {
       leftOutput[i] = processedSamples[i * 2];
       rightOutput[i] = processedSamples[i * 2 + 1];
+
+      if (isNaN(leftOutput[i]) || isNaN(rightOutput[i])) {
+        leftOutput[i] = 0;
+        rightOutput[i] = 0;
+      }
     }
 
     return true;
