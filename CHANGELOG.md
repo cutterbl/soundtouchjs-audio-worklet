@@ -1,4 +1,11 @@
 Changelog
+## 0.2.1 (2025-04-23)
+
+
+### Bug Fixes
+
+* prevent early audio cutoff due to NaN values ([#27](https://github.com/cutterbl/soundtouchjs-audio-worklet/issues/27)) ([f9e65a2](https://github.com/cutterbl/soundtouchjs-audio-worklet/commit/f9e65a27d68e74598db5abfa89e7d192013ad255))
+
 ## 0.2.0 (2025-03-06)
 
 
