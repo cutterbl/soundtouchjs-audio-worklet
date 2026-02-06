@@ -1,4 +1,18 @@
-Changelog
+# Changelog
+
+All notable changes to this project will be documented in this file. See [commit-and-tag-version](https://github.com/absolute-version/commit-and-tag-version) for commit guidelines.
+
+## 0.3.0 (2026-02-06)
+
+
+### ⚠ BREAKING CHANGES
+
+* Updated all dependencies and retool for true ESM package.
+
+### Features
+
+* Build updates ([#29](https://github.com/cutterbl/soundtouchjs-audio-worklet/issues/29)) ([6772efb](https://github.com/cutterbl/soundtouchjs-audio-worklet/commit/6772efbaec11a447b424351b322c43c0af1a5f7c))
+
 ## 0.2.1 (2025-04-23)
 
 
