@@ -1,5 +1,5 @@
 import path from 'path';
-import * as url from 'url';
+import { fileURLToPath } from 'url';
 import babel from '@rollup/plugin-babel';
 import resolve from '@rollup/plugin-node-resolve';
 import clear from 'rollup-plugin-clear';
@@ -7,7 +7,7 @@ import eslint from '@rollup/plugin-eslint';
 import cleanup from 'rollup-plugin-cleanup';
 import pkg from '../package.json' with { type: 'json' };
 
-const __dirname = url.fileURLToPath(new URL('.', import.meta.url));
+const __dirname = fileURLToPath(new URL('.', import.meta.url));
 
 const banner = `/*
 * SoundTouch Audio Worklet v${pkg.version} AudioWorklet using the
@@ -39,10 +39,9 @@ export default [
     output: [
       {
         file: 'dist/soundtouch-worklet.js',
-        format: 'cjs',
+        format: 'es',
         banner: banner,
         sourcemap: false,
-        exports: 'named',
       },
     ],
     plugins: [
@@ -54,7 +53,7 @@ export default [
         browser: true,
       }),
       eslint({
-        overrideConfigFile: path.resolve(__dirname, '../.eslintrc.js'),
+        overrideConfigFile: path.resolve(__dirname, '../eslint.config.js'),
       }),
       babel({
         babelHelpers: 'bundled',
