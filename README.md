@@ -1,3 +1,7 @@
+# ⚠️ **DEPRECATED REPOSITORY** ⚠️
+
+> **NOTE:** This repository is **deprecated**. All development and maintenance have been transferred to the monorepo for **[SoundTouchJS](https://github.com/cutterbl/SoundTouchJS)**. Please use the monorepo for the latest updates, issues, and contributions.
+
 # SoundTouchJS Audio Worklet
 
 ## BREAKING CHANGE:
